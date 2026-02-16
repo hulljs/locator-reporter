@@ -187,6 +187,282 @@ app.post('/api/ai/metrics', async (req, res) => {
 });
 
 
+// ========== People ==========
+app.get('/api/people', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM people ORDER BY name');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/people/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query('SELECT * FROM people WHERE id = $1', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Person not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/people', async (req, res) => {
+    const { name, role, email, phone, organization, skills } = req.body;
+    try {
+        const result = await pool.query(
+            'INSERT INTO people (name, role, email, phone, organization, skills) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [name, role, email, phone, organization, skills]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/people/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, role, email, phone, organization, skills } = req.body;
+    try {
+        const result = await pool.query(
+            'UPDATE people SET name=$1, role=$2, email=$3, phone=$4, organization=$5, skills=$6 WHERE id=$7 RETURNING *',
+            [name, role, email, phone, organization, skills, id]
+        );
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Person not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/people/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query('DELETE FROM people WHERE id = $1 RETURNING *', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Person not found' });
+        res.json({ message: 'Person deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========== Assignments ==========
+app.get('/api/assignments', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT a.*, p.name as person_name, p.role as person_role, p.email as person_email,
+                   p.organization, l.name as location_name
+            FROM assignments a
+            JOIN people p ON a.person_id = p.id
+            JOIN locations l ON a.location_id = l.id
+            ORDER BY l.name, p.name
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/locations/:id/assignments', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query(`
+            SELECT a.*, p.name as person_name, p.role as person_role, p.email as person_email,
+                   p.phone as person_phone, p.organization, p.skills
+            FROM assignments a
+            JOIN people p ON a.person_id = p.id
+            WHERE a.location_id = $1
+            ORDER BY p.name
+        `, [id]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/people/:id/assignments', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query(`
+            SELECT a.*, l.name as location_name, l.description as location_description
+            FROM assignments a
+            JOIN locations l ON a.location_id = l.id
+            WHERE a.person_id = $1
+            ORDER BY a.start_date DESC
+        `, [id]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/assignments', async (req, res) => {
+    const { person_id, location_id, role_at_location, start_date, end_date, status } = req.body;
+    try {
+        const result = await pool.query(
+            'INSERT INTO assignments (person_id, location_id, role_at_location, start_date, end_date, status) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *',
+            [person_id, location_id, role_at_location, start_date || null, end_date || null, status || 'active']
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/assignments/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query('DELETE FROM assignments WHERE id = $1 RETURNING *', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Assignment not found' });
+        res.json({ message: 'Assignment deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========== Reports ==========
+app.get('/api/reports', async (req, res) => {
+    const { search, type, location_id } = req.query;
+    try {
+        let query = `
+            SELECT r.*, l.name as location_name, p.name as author_name
+            FROM reports r
+            LEFT JOIN locations l ON r.location_id = l.id
+            LEFT JOIN people p ON r.author_id = p.id
+            WHERE 1=1
+        `;
+        const params = [];
+        let paramIdx = 1;
+
+        if (search) {
+            query += ` AND (r.title ILIKE $${paramIdx} OR r.body ILIKE $${paramIdx})`;
+            params.push(`%${search}%`);
+            paramIdx++;
+        }
+        if (type) {
+            query += ` AND r.report_type = $${paramIdx}`;
+            params.push(type);
+            paramIdx++;
+        }
+        if (location_id) {
+            query += ` AND r.location_id = $${paramIdx}`;
+            params.push(location_id);
+            paramIdx++;
+        }
+
+        query += ' ORDER BY r.report_date DESC';
+
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/reports/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query(`
+            SELECT r.*, l.name as location_name, p.name as author_name
+            FROM reports r
+            LEFT JOIN locations l ON r.location_id = l.id
+            LEFT JOIN people p ON r.author_id = p.id
+            WHERE r.id = $1
+        `, [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Report not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/reports', async (req, res) => {
+    const { location_id, author_id, title, body, report_type, report_date } = req.body;
+    try {
+        const result = await pool.query(
+            'INSERT INTO reports (location_id, author_id, title, body, report_type, report_date) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *',
+            [location_id, author_id || null, title, body, report_type || 'general', report_date || null]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/reports/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query('DELETE FROM reports WHERE id = $1 RETURNING *', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Report not found' });
+        res.json({ message: 'Report deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========== Dashboard Aggregates ==========
+app.get('/api/dashboard/summary', async (req, res) => {
+    try {
+        const [locations, people, projects, reports] = await Promise.all([
+            pool.query('SELECT COUNT(*) as count FROM locations'),
+            pool.query('SELECT COUNT(*) as count FROM people'),
+            pool.query('SELECT COUNT(*) as count FROM projects'),
+            pool.query('SELECT COUNT(*) as count FROM reports')
+        ]);
+        res.json({
+            total_locations: parseInt(locations.rows[0].count),
+            total_people: parseInt(people.rows[0].count),
+            total_projects: parseInt(projects.rows[0].count),
+            total_reports: parseInt(reports.rows[0].count)
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/dashboard/projects-by-location', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT l.id as location_id, l.name as location_name,
+                   json_agg(json_build_object(
+                       'id', p.id, 'name', p.name, 'description', p.description, 'is_top_5', p.is_top_5
+                   ) ORDER BY p.is_top_5 DESC, p.name) as projects,
+                   COUNT(p.id) as project_count,
+                   COUNT(p.id) FILTER (WHERE p.is_top_5) as top_5_count
+            FROM locations l
+            LEFT JOIN projects p ON l.id = p.location_id
+            GROUP BY l.id, l.name
+            ORDER BY l.name
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/dashboard/people-by-location', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT l.id as location_id, l.name as location_name,
+                   json_agg(json_build_object(
+                       'person_id', pe.id, 'person_name', pe.name, 'person_role', pe.role,
+                       'organization', pe.organization, 'role_at_location', a.role_at_location,
+                       'status', a.status, 'email', pe.email
+                   ) ORDER BY pe.name) as people,
+                   COUNT(DISTINCT pe.id) as people_count
+            FROM locations l
+            LEFT JOIN assignments a ON l.id = a.location_id AND a.status = 'active'
+            LEFT JOIN people pe ON a.person_id = pe.id
+            GROUP BY l.id, l.name
+            ORDER BY l.name
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Backend server running on port ${port}`);
 });

@@ -5,11 +5,15 @@
         style="position: absolute; top: 24px; right: 24px; z-index: 150; display: flex; gap: 12px; pointer-events: auto;">
 
         <div *ngIf="!isAddingLocation" style="display: flex; gap: 12px;">
+            <a routerLink="/dashboard" class="ai-toggle-btn"
+                style="position: static; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="material-icons" style="font-size: 18px;">dashboard</i> Dashboard
+            </a>
             <button class="ai-toggle-btn" style="position: static;" (click)="startAddLocation()">
                 + Add Location
             </button>
             <button class="ai-toggle-btn" style="position: static;" (click)="showAi = !showAi">
-                {{ showAi ? 'Hide AI' : 'Show AI 🤖' }}
+                {{ showAi ? 'Hide AI' : 'Show AI' }}
             </button>
         </div>
 
@@ -30,13 +34,6 @@
 
     <div class="dashboard-overlay" *ngIf="showAi">
         <app-dashboard [locationId]="dashboardLocationId"></app-dashboard>
-    </div>
-
-    <!-- Removed Condition !showAi so card persists -->
-    <!-- Debugging State -->
-    <div
-        style="position: absolute; bottom: 10px; left: 10px; z-index: 9999; background: black; color: white; padding: 10px; max-width: 300px; font-size: 10px;">
-        Selected: {{ selectedLocation ? selectedLocation.name : 'None' }}
     </div>
 
     <div class="card-overlay" *ngIf="selectedLocation">
