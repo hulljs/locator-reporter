@@ -1,0 +1,57 @@
+<div class="ai-dashboard">
+
+    <div class="ai-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="material-icons" style="color: #3b82f6;">api</i>
+            <span class="ai-title">AI Analyst</span>
+        </div>
+        <span class="ai-badge">Connected</span>
+    </div>
+
+    <div *ngIf="loading" class="loading-container">
+        <div class="spinner"></div>
+        <span>Processing program data...</span>
+    </div>
+
+    <div *ngIf="!loading" class="fade-in">
+
+        <!-- Overview Section -->
+        <div class="section">
+            <div class="section-title">
+                <i class="material-icons" style="font-size: 16px;">description</i>
+                Program Overview
+            </div>
+            <div class="overview-card glass-panel" style="padding: 16px;">
+                {{ overview?.overview || 'No overview available.' }}
+            </div>
+        </div>
+
+        <!-- Key Metrics Section -->
+        <div class="section">
+            <div class="section-title">
+                <i class="material-icons" style="font-size: 16px;">analytics</i>
+                Key Insights
+            </div>
+
+            <div class="metrics-grid">
+                <div *ngFor="let metric of metrics?.metrics" class="metric-item glass-panel">
+                    <div>
+                        <div class="metric-name">{{ metric.name }}</div>
+                        <div style="font-size: 0.8em; color: #94a3b8; margin-top: 4px;">{{ metric.details }}</div>
+                    </div>
+
+                    <div class="metric-value">
+                        <span *ngIf="metric.status === 'Pass'" class="status-pass">
+                            <i class="material-icons" style="vertical-align: middle;">check_circle</i>
+                        </span>
+                        <span *ngIf="metric.value" style="color: #3b82f6;">
+                            {{ metric.value }} <span *ngIf="metric.trend == 'up'" style="color: #10b981;">↑</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>

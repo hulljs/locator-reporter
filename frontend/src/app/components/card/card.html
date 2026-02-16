@@ -1,0 +1,148 @@
+<div class="card-container">
+    <!-- Wrapper for 3D Transform -->
+    <div class="card" [class.is-flipped]="isFlipped">
+
+        <!-- Front Face: POCs -->
+        <div class="card-face card-front">
+            <div class="header" [style.display]="isEditing ? 'block' : 'flex'">
+                <div *ngIf="!isEditing"
+                    style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div class="title">{{ location?.name || 'Location' }}</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="action-btn cancel" style="padding: 4px 12px; font-size: 0.75rem;"
+                            (click)="toggleEdit()">Edit</button>
+                        <button class="close-btn" (click)="onClose()">×</button>
+                    </div>
+                </div>
+
+                <div *ngIf="isEditing">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="font-weight: bold; color: #fff;">Edit Location</span>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="action-btn save" (click)="save()">Save</button>
+                            <button class="action-btn cancel" (click)="toggleEdit()">Cancel</button>
+                        </div>
+                    </div>
+                    <input [(ngModel)]="editName" placeholder="Location Name" class="edit-input"
+                        style="font-size: 1.1rem; font-weight: bold; margin-bottom: 8px;">
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- Description -->
+                <div *ngIf="!isEditing && location?.description"
+                    style="margin-bottom: 16px; color: #94a3b8; font-size: 0.9rem; font-style: italic;">
+                    {{ location?.description }}
+                </div>
+                <div *ngIf="isEditing" style="margin-bottom: 16px;">
+                    <textarea [(ngModel)]="editDesc" placeholder="Description" class="edit-input" rows="3"></textarea>
+                </div>
+
+                <div
+                    style="margin-bottom: 8px; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">
+                    Points of Contact
+                </div>
+
+                <ul *ngIf="pocs.length > 0; else noPocs">
+                    <li *ngFor="let poc of pocs" class="poc-item">
+                        <div class="item-name">{{ poc.name }}</div>
+                        <div class="item-role">{{ poc.role }}</div>
+                        <div class="item-meta">
+                            <span><i class="material-icons" style="font-size: 14px; vertical-align: middle;">email</i>
+                                {{ poc.email }}</span>
+                        </div>
+                        <div class="item-meta">
+                            <span><i class="material-icons" style="font-size: 14px; vertical-align: middle;">phone</i>
+                                {{ poc.phone }}</span>
+                        </div>
+                    </li>
+                </ul>
+                <ng-template #noPocs>
+                    <div style="color: #94a3b8; text-align: center; padding: 20px; font-size: 0.9rem;">
+                        No Points of Contact found.
+                    </div>
+                </ng-template>
+            </div>
+
+            <button class="flip-btn" (click)="flip()">
+                View Top Projects <i class="material-icons" style="font-size: 18px;">arrow_forward</i>
+            </button>
+        </div>
+
+        <!-- Back Face: Projects -->
+        <div class="card-face card-back">
+            <div class="header">
+                <div class="title">Project Stats</div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="close-btn" style="font-size: 20px; width: auto;" (click)="onAnalyze()"
+                        title="AI Insights">🤖</button>
+                    <button class="close-btn" (click)="onClose()">×</button>
+                </div>
+            </div>
+
+            <div class="content">
+                <ul *ngIf="projects.length > 0; else noProjects">
+                    <li *ngFor="let proj of projects" class="project-item">
+                        <ng-container *ngIf="!isEditing">
+                            <div class="item-name">
+                                {{ proj.name }}
+                                <span *ngIf="proj.is_top_5" class="top-rated-badge">
+                                    <i class="material-icons" style="font-size: 12px;">star</i> Top 5
+                                </span>
+                            </div>
+                            <div class="item-desc">{{ proj.description }}</div>
+                        </ng-container>
+
+                        <ng-container *ngIf="isEditing">
+                            <input [(ngModel)]="proj.name" class="edit-input"
+                                style="font-weight: bold; margin-bottom: 4px;" (change)="saveProject(proj)">
+                            <textarea [(ngModel)]="proj.description" class="edit-input" rows="2"
+                                style="font-size: 0.8rem;" (change)="saveProject(proj)"></textarea>
+
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                <label
+                                    style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; color: #fbbf24; cursor: pointer;">
+                                    <input type="checkbox" [(ngModel)]="proj.is_top_5" (change)="saveProject(proj)"> Top
+                                    5
+                                </label>
+                                <button class="icon-btn delete" (click)="deleteProject(proj)" title="Delete Project">
+                                    <i class="material-icons" style="font-size: 16px;">delete</i>
+                                </button>
+                            </div>
+                        </ng-container>
+
+                        <!-- Pseudo Progress Bar for Visuals -->
+                        <div *ngIf="!isEditing"
+                            style="margin-top: 12px; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; overflow: hidden;">
+                            <div
+                                style="height: 100%; background: var(--accent-success); width: 75%; border-radius: 2px;">
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+                <ng-template #noProjects>
+                    <div style="color: #94a3b8; text-align: center; padding: 20px;">
+                        No projects linked.
+                    </div>
+                </ng-template>
+
+                <!-- Add Project Button -->
+                <button *ngIf="isEditing" (click)="addProject()"
+                    style="margin-top: 16px; width: 100%; padding: 8px; border: 1px dashed rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); color: #94a3b8; border-radius: 8px; cursor: pointer; transition: background 0.2s;">
+                    + Add New Project
+                </button>
+                <div *ngIf="!isEditing && projects.length === 0"
+                    style="text-align: center; margin-top: 10px; font-size: 0.8rem; opacity: 0.7;">
+                    (Click Edit on front to add projects)
+                </div>
+            </div>
+
+            <button class="flip-btn" (click)="flip()">
+                <i class="material-icons" style="font-size: 18px;">arrow_back</i> Back to Roster
+            </button>
+        </div>
+
+    </div>
+</div>

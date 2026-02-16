@@ -1,0 +1,46 @@
+<div class="map-container">
+    <div id="map"></div>
+
+    <div
+        style="position: absolute; top: 24px; right: 24px; z-index: 150; display: flex; gap: 12px; pointer-events: auto;">
+
+        <div *ngIf="!isAddingLocation" style="display: flex; gap: 12px;">
+            <button class="ai-toggle-btn" style="position: static;" (click)="startAddLocation()">
+                + Add Location
+            </button>
+            <button class="ai-toggle-btn" style="position: static;" (click)="showAi = !showAi">
+                {{ showAi ? 'Hide AI' : 'Show AI 🤖' }}
+            </button>
+        </div>
+
+        <div *ngIf="isAddingLocation"
+            style="display: flex; gap: 8px; align-items: center; background: rgba(15, 23, 42, 0.9); padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);">
+            <span style="color: #94a3b8; font-size: 0.8rem; font-family: 'Outfit', sans-serif;">Search:</span>
+            <input [(ngModel)]="searchQuery" (keyup.enter)="searchAndPlace()" placeholder="City, State, Zip..."
+                style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 6px 10px; color: white; width: 150px; outline: none;">
+            <button class="ai-toggle-btn" style="position: static; padding: 6px 12px; font-size: 0.8rem;"
+                (click)="searchAndPlace()">Go</button>
+            <span style="color: #94a3b8; font-size: 0.8rem; margin: 0 4px;">or click map</span>
+            <button class="ai-toggle-btn"
+                style="position: static; padding: 6px 12px; font-size: 0.8rem; background: rgba(255,255,255,0.1);"
+                (click)="cancelAdd()">Cancel</button>
+        </div>
+
+    </div>
+
+    <div class="dashboard-overlay" *ngIf="showAi">
+        <app-dashboard [locationId]="dashboardLocationId"></app-dashboard>
+    </div>
+
+    <!-- Removed Condition !showAi so card persists -->
+    <!-- Debugging State -->
+    <div
+        style="position: absolute; bottom: 10px; left: 10px; z-index: 9999; background: black; color: white; padding: 10px; max-width: 300px; font-size: 10px;">
+        Selected: {{ selectedLocation ? selectedLocation.name : 'None' }}
+    </div>
+
+    <div class="card-overlay" *ngIf="selectedLocation">
+        <app-card [location]="selectedLocation" [locationId]="selectedLocation.id"
+            (close)="selectedLocation = undefined" (analyze)="openAiForLocation()"></app-card>
+    </div>
+</div>
