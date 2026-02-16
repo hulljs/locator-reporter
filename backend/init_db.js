@@ -45,6 +45,43 @@ const createTables = async () => {
       );
     `);
 
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS people (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        role TEXT,
+        email TEXT,
+        phone TEXT,
+        organization TEXT,
+        skills TEXT
+      );
+    `);
+
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS assignments (
+        id SERIAL PRIMARY KEY,
+        person_id INTEGER REFERENCES people(id) ON DELETE CASCADE,
+        location_id INTEGER REFERENCES locations(id) ON DELETE CASCADE,
+        role_at_location TEXT,
+        start_date DATE,
+        end_date DATE,
+        status TEXT DEFAULT 'active'
+      );
+    `);
+
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS reports (
+        id SERIAL PRIMARY KEY,
+        location_id INTEGER REFERENCES locations(id) ON DELETE CASCADE,
+        author_id INTEGER REFERENCES people(id) ON DELETE SET NULL,
+        title TEXT NOT NULL,
+        body TEXT,
+        report_type TEXT DEFAULT 'general',
+        report_date DATE DEFAULT CURRENT_DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
         await client.query('COMMIT');
         console.log('Tables created successfully');
     } catch (e) {

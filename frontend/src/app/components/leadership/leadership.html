@@ -1,0 +1,303 @@
+<div class="leadership-container">
+
+    <!-- Header -->
+    <header class="leadership-header">
+        <div class="header-left">
+            <h1>Leadership Dashboard</h1>
+            <p class="header-subtitle">Program overview, projects, personnel, and reports</p>
+        </div>
+        <a routerLink="/" class="nav-btn">
+            <i class="material-icons">map</i> Map View
+        </a>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+        <button class="tab-btn" [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'">
+            <i class="material-icons">dashboard</i> Overview
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'projects'" (click)="activeTab = 'projects'">
+            <i class="material-icons">assignment</i> Projects
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'people'" (click)="activeTab = 'people'">
+            <i class="material-icons">people</i> Personnel
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'reports'" (click)="activeTab = 'reports'">
+            <i class="material-icons">description</i> Reports
+        </button>
+    </nav>
+
+    <!-- Tab Content -->
+    <main class="tab-content">
+
+        <!-- ========== OVERVIEW TAB ========== -->
+        <section *ngIf="activeTab === 'overview'" class="fade-in">
+
+            <!-- Summary Cards -->
+            <div class="summary-grid" *ngIf="summary">
+                <div class="summary-card">
+                    <div class="summary-icon locations"><i class="material-icons">place</i></div>
+                    <div class="summary-info">
+                        <div class="summary-value">{{ summary.total_locations }}</div>
+                        <div class="summary-label">Locations</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon people"><i class="material-icons">people</i></div>
+                    <div class="summary-info">
+                        <div class="summary-value">{{ summary.total_people }}</div>
+                        <div class="summary-label">Personnel</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon projects"><i class="material-icons">assignment</i></div>
+                    <div class="summary-info">
+                        <div class="summary-value">{{ summary.total_projects }}</div>
+                        <div class="summary-label">Projects</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon reports"><i class="material-icons">description</i></div>
+                    <div class="summary-info">
+                        <div class="summary-value">{{ summary.total_reports }}</div>
+                        <div class="summary-label">Reports</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick View: Projects by Location -->
+            <div class="section-header">
+                <h2>Projects by Location</h2>
+                <button class="text-btn" (click)="activeTab = 'projects'">View All</button>
+            </div>
+            <div class="location-cards-grid">
+                <div *ngFor="let loc of projectsByLocation" class="location-card glass-panel">
+                    <div class="location-card-header">
+                        <h3>{{ loc.location_name }}</h3>
+                        <div class="location-stats">
+                            <span class="stat">{{ loc.project_count }} projects</span>
+                            <span class="stat highlight">{{ loc.top_5_count }} top 5</span>
+                        </div>
+                    </div>
+                    <ul class="project-quick-list">
+                        <li *ngFor="let proj of loc.projects?.slice(0, 3)">
+                            <span class="project-name">{{ proj.name }}</span>
+                            <span *ngIf="proj.is_top_5" class="top5-badge">Top 5</span>
+                        </li>
+                    </ul>
+                    <div *ngIf="loc.projects && loc.projects.length > 3" class="more-indicator">
+                        +{{ loc.projects.length - 3 }} more
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick View: People by Location -->
+            <div class="section-header">
+                <h2>Personnel by Location</h2>
+                <button class="text-btn" (click)="activeTab = 'people'">View All</button>
+            </div>
+            <div class="location-cards-grid">
+                <div *ngFor="let loc of peopleByLocation" class="location-card glass-panel">
+                    <div class="location-card-header">
+                        <h3>{{ loc.location_name }}</h3>
+                        <span class="stat">{{ loc.people_count }} assigned</span>
+                    </div>
+                    <ul class="people-quick-list">
+                        <li *ngFor="let p of loc.people?.slice(0, 4)">
+                            <div class="person-avatar">{{ p.person_name?.charAt(0) }}</div>
+                            <div class="person-quick-info">
+                                <span class="person-name">{{ p.person_name }}</span>
+                                <span class="person-role-tag">{{ p.role_at_location }}</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Recent Reports -->
+            <div class="section-header">
+                <h2>Recent Reports</h2>
+                <button class="text-btn" (click)="activeTab = 'reports'">View All</button>
+            </div>
+            <div class="reports-list">
+                <div *ngFor="let report of reports.slice(0, 4)" class="report-row glass-panel"
+                    (click)="viewReport(report)">
+                    <div class="report-row-main">
+                        <span class="report-type-badge" [ngClass]="getReportTypeBadgeClass(report.report_type)">
+                            {{ report.report_type }}
+                        </span>
+                        <span class="report-title">{{ report.title }}</span>
+                    </div>
+                    <div class="report-row-meta">
+                        <span>{{ report.location_name }}</span>
+                        <span>{{ report.author_name }}</span>
+                        <span>{{ formatDate(report.report_date) }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== PROJECTS TAB ========== -->
+        <section *ngIf="activeTab === 'projects'" class="fade-in">
+            <div *ngFor="let loc of projectsByLocation" class="detail-card glass-panel">
+                <div class="detail-card-header" (click)="toggleLocation(loc.location_id)">
+                    <div class="detail-card-title">
+                        <i class="material-icons">place</i>
+                        <h3>{{ loc.location_name }}</h3>
+                    </div>
+                    <div class="detail-card-summary">
+                        <span class="stat">{{ loc.project_count }} projects</span>
+                        <span class="stat highlight">{{ loc.top_5_count }} top 5</span>
+                        <i class="material-icons expand-icon">
+                            {{ isExpanded(loc.location_id) ? 'expand_less' : 'expand_more' }}
+                        </i>
+                    </div>
+                </div>
+                <div class="detail-card-body" *ngIf="isExpanded(loc.location_id)">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Description</th>
+                                <th>Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let proj of loc.projects">
+                                <td class="cell-name">{{ proj.name }}</td>
+                                <td class="cell-desc">{{ proj.description }}</td>
+                                <td>
+                                    <span *ngIf="proj.is_top_5" class="top5-badge">Top 5</span>
+                                    <span *ngIf="!proj.is_top_5" class="standard-badge">Standard</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== PEOPLE TAB ========== -->
+        <section *ngIf="activeTab === 'people'" class="fade-in">
+            <div *ngFor="let loc of peopleByLocation" class="detail-card glass-panel">
+                <div class="detail-card-header" (click)="toggleLocation(loc.location_id + 1000)">
+                    <div class="detail-card-title">
+                        <i class="material-icons">place</i>
+                        <h3>{{ loc.location_name }}</h3>
+                    </div>
+                    <div class="detail-card-summary">
+                        <span class="stat">{{ loc.people_count }} personnel</span>
+                        <i class="material-icons expand-icon">
+                            {{ isExpanded(loc.location_id + 1000) ? 'expand_less' : 'expand_more' }}
+                        </i>
+                    </div>
+                </div>
+                <div class="detail-card-body" *ngIf="isExpanded(loc.location_id + 1000)">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Organization</th>
+                                <th>Role (Global)</th>
+                                <th>Role (At Location)</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let p of loc.people">
+                                <td class="cell-name">{{ p.person_name }}</td>
+                                <td>{{ p.organization }}</td>
+                                <td>{{ p.person_role }}</td>
+                                <td>{{ p.role_at_location }}</td>
+                                <td class="cell-email">{{ p.email }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== REPORTS TAB ========== -->
+        <section *ngIf="activeTab === 'reports'" class="fade-in">
+
+            <!-- Search / Filters -->
+            <div class="filters-bar glass-panel">
+                <div class="filter-group">
+                    <i class="material-icons">search</i>
+                    <input type="text" [(ngModel)]="reportSearch" placeholder="Search reports..."
+                        (keyup.enter)="searchReports()" class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <select [(ngModel)]="reportTypeFilter" (change)="searchReports()" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="inspection">Inspection</option>
+                        <option value="sitrep">Sitrep</option>
+                        <option value="assessment">Assessment</option>
+                        <option value="general">General</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select [(ngModel)]="reportLocationFilter" (change)="searchReports()" class="filter-select">
+                        <option value="">All Locations</option>
+                        <option *ngFor="let loc of projectsByLocation" [value]="loc.location_id">
+                            {{ loc.location_name }}
+                        </option>
+                    </select>
+                </div>
+                <button class="clear-btn" (click)="clearFilters()">Clear</button>
+            </div>
+
+            <!-- Reports List -->
+            <div class="reports-list">
+                <div *ngFor="let report of reports" class="report-row glass-panel" (click)="viewReport(report)">
+                    <div class="report-row-main">
+                        <span class="report-type-badge" [ngClass]="getReportTypeBadgeClass(report.report_type)">
+                            {{ report.report_type }}
+                        </span>
+                        <span class="report-title">{{ report.title }}</span>
+                    </div>
+                    <div class="report-row-meta">
+                        <span><i class="material-icons meta-icon">place</i> {{ report.location_name }}</span>
+                        <span><i class="material-icons meta-icon">person</i> {{ report.author_name || 'Unknown'
+                            }}</span>
+                        <span><i class="material-icons meta-icon">calendar_today</i> {{ formatDate(report.report_date)
+                            }}</span>
+                    </div>
+                </div>
+                <div *ngIf="reports.length === 0" class="empty-state">
+                    No reports found matching your filters.
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Report Detail Modal -->
+    <div class="modal-overlay" *ngIf="selectedReport" (click)="closeReport()">
+        <div class="modal-content glass-panel" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <span class="report-type-badge"
+                        [ngClass]="getReportTypeBadgeClass(selectedReport.report_type)">
+                        {{ selectedReport.report_type }}
+                    </span>
+                    <h2>{{ selectedReport.title }}</h2>
+                </div>
+                <button class="close-btn" (click)="closeReport()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="modal-meta">
+                <span><i class="material-icons meta-icon">place</i> {{ selectedReport.location_name }}</span>
+                <span><i class="material-icons meta-icon">person</i> {{ selectedReport.author_name || 'Unknown'
+                    }}</span>
+                <span><i class="material-icons meta-icon">calendar_today</i> {{
+                    formatDate(selectedReport.report_date) }}</span>
+            </div>
+            <div class="modal-body">
+                {{ selectedReport.body }}
+            </div>
+        </div>
+    </div>
+</div>

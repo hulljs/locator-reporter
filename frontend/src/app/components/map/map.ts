@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, NgZone, Inject, PLATFORM_ID, ChangeDe
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
 import { LocationService, LocationModel } from '../../services/location';
 import { CardComponent } from '../card/card';
 import { DashboardComponent } from '../dashboard/dashboard';
@@ -9,7 +10,7 @@ import { DashboardComponent } from '../dashboard/dashboard';
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardComponent, DashboardComponent],
+  imports: [CommonModule, FormsModule, RouterLink, CardComponent, DashboardComponent],
   templateUrl: './map.html',
   styleUrls: ['./map.css']
 })
