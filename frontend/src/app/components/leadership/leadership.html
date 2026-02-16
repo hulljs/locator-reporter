@@ -1,33 +1,113 @@
 <div class="leadership-container">
 
-    <!-- Header -->
+    <!-- ===================== HEADER ===================== -->
     <header class="leadership-header">
         <div class="header-left">
-            <h1>Leadership Dashboard</h1>
-            <p class="header-subtitle">Program overview, projects, personnel, and reports</p>
+            <h1 class="gradient-text">Leadership Dashboard</h1>
+            <p class="header-subtitle">Enterprise program overview — projects, personnel, budgets, and reports</p>
         </div>
-        <a routerLink="/" class="nav-btn">
-            <i class="material-icons">map</i> Map View
-        </a>
+        <div class="header-right">
+            <!-- Export Dropdown -->
+            <div class="dropdown">
+                <button class="header-btn dropdown-toggle">
+                    <i class="material-icons">download</i> Export
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item" (click)="exportProjectsCsv()">
+                        <i class="material-icons">table_chart</i> CSV Projects
+                    </button>
+                    <button class="dropdown-item" (click)="exportPeopleCsv()">
+                        <i class="material-icons">people</i> CSV People
+                    </button>
+                    <button class="dropdown-item" (click)="printDashboard()">
+                        <i class="material-icons">print</i> Print
+                    </button>
+                </div>
+            </div>
+
+            <!-- Notification Bell -->
+            <button class="header-btn notification-btn" (click)="toggleNotifications()">
+                <i class="material-icons">notifications</i>
+                <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+            </button>
+
+            <!-- User Info -->
+            <div class="header-user" *ngIf="authService.isLoggedIn">
+                <div class="user-info">
+                    <span class="user-name">{{ authService.currentUser?.name }}</span>
+                    <span class="user-role">{{ authService.currentUser?.role }}</span>
+                </div>
+                <button class="header-btn logout-btn" (click)="logout()">
+                    <i class="material-icons">logout</i> Log Out
+                </button>
+            </div>
+            <a routerLink="/login" class="header-btn login-btn" *ngIf="!authService.isLoggedIn">
+                <i class="material-icons">login</i> Log In
+            </a>
+
+            <!-- Map View Link -->
+            <a routerLink="/" class="header-btn map-btn">
+                <i class="material-icons">map</i> Map View
+            </a>
+        </div>
     </header>
 
-    <!-- Tab Navigation -->
+    <!-- ===================== NOTIFICATION PANEL ===================== -->
+    <div class="notification-panel glass-panel" *ngIf="showNotifications">
+        <div class="notification-panel-header">
+            <h3>Notifications</h3>
+            <button class="text-btn" (click)="markAllNotificationsRead()" *ngIf="unreadCount > 0">
+                Mark all read
+            </button>
+        </div>
+        <div class="notification-list">
+            <div *ngFor="let n of notifications"
+                 class="notification-item"
+                 [class.unread]="!n.is_read">
+                <div class="notification-icon">
+                    <i class="material-icons">{{ getNotificationIcon(n.type) }}</i>
+                </div>
+                <div class="notification-content">
+                    <span class="notification-title">{{ n.title }}</span>
+                    <span class="notification-message">{{ n.message }}</span>
+                    <span class="notification-time">{{ timeAgo(n.created_at) }}</span>
+                </div>
+                <button class="notification-mark-btn" *ngIf="!n.is_read" (click)="markNotificationRead(n)">
+                    <i class="material-icons">check_circle</i>
+                </button>
+            </div>
+            <div *ngIf="notifications.length === 0" class="empty-state">
+                No notifications.
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== TAB NAVIGATION ===================== -->
     <nav class="tab-nav">
-        <button class="tab-btn" [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'">
+        <button class="tab-btn" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
             <i class="material-icons">dashboard</i> Overview
         </button>
-        <button class="tab-btn" [class.active]="activeTab === 'projects'" (click)="activeTab = 'projects'">
+        <button class="tab-btn" [class.active]="activeTab === 'projects'" (click)="setTab('projects')">
             <i class="material-icons">assignment</i> Projects
         </button>
-        <button class="tab-btn" [class.active]="activeTab === 'people'" (click)="activeTab = 'people'">
+        <button class="tab-btn" [class.active]="activeTab === 'people'" (click)="setTab('people')">
             <i class="material-icons">people</i> Personnel
         </button>
-        <button class="tab-btn" [class.active]="activeTab === 'reports'" (click)="activeTab = 'reports'">
+        <button class="tab-btn" [class.active]="activeTab === 'heatmap'" (click)="setTab('heatmap')">
+            <i class="material-icons">grid_on</i> Heatmap
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'activity'" (click)="setTab('activity')">
+            <i class="material-icons">history</i> Activity
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'charts'" (click)="setTab('charts')">
+            <i class="material-icons">bar_chart</i> Charts
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'reports'" (click)="setTab('reports')">
             <i class="material-icons">description</i> Reports
         </button>
     </nav>
 
-    <!-- Tab Content -->
+    <!-- ===================== TAB CONTENT ===================== -->
     <main class="tab-content">
 
         <!-- ========== OVERVIEW TAB ========== -->
@@ -35,40 +115,68 @@
 
             <!-- Summary Cards -->
             <div class="summary-grid" *ngIf="summary">
-                <div class="summary-card">
+                <div class="summary-card glass-panel">
                     <div class="summary-icon locations"><i class="material-icons">place</i></div>
                     <div class="summary-info">
                         <div class="summary-value">{{ summary.total_locations }}</div>
                         <div class="summary-label">Locations</div>
                     </div>
                 </div>
-                <div class="summary-card">
+                <div class="summary-card glass-panel">
                     <div class="summary-icon people"><i class="material-icons">people</i></div>
                     <div class="summary-info">
                         <div class="summary-value">{{ summary.total_people }}</div>
                         <div class="summary-label">Personnel</div>
                     </div>
                 </div>
-                <div class="summary-card">
+                <div class="summary-card glass-panel">
                     <div class="summary-icon projects"><i class="material-icons">assignment</i></div>
                     <div class="summary-info">
                         <div class="summary-value">{{ summary.total_projects }}</div>
                         <div class="summary-label">Projects</div>
                     </div>
                 </div>
-                <div class="summary-card">
+                <div class="summary-card glass-panel">
                     <div class="summary-icon reports"><i class="material-icons">description</i></div>
                     <div class="summary-info">
                         <div class="summary-value">{{ summary.total_reports }}</div>
                         <div class="summary-label">Reports</div>
                     </div>
                 </div>
+                <div class="summary-card glass-panel accent-warning">
+                    <div class="summary-icon at-risk"><i class="material-icons">warning</i></div>
+                    <div class="summary-info">
+                        <div class="summary-value">{{ summary.at_risk_count }}</div>
+                        <div class="summary-label">At Risk</div>
+                    </div>
+                </div>
+                <div class="summary-card glass-panel accent-danger">
+                    <div class="summary-icon behind"><i class="material-icons">error</i></div>
+                    <div class="summary-info">
+                        <div class="summary-value">{{ summary.behind_count }}</div>
+                        <div class="summary-label">Behind</div>
+                    </div>
+                </div>
+                <div class="summary-card glass-panel accent-danger">
+                    <div class="summary-icon overcommitted"><i class="material-icons">person_off</i></div>
+                    <div class="summary-info">
+                        <div class="summary-value">{{ summary.overcommitted_count }}</div>
+                        <div class="summary-label">Overcommitted</div>
+                    </div>
+                </div>
+                <div class="summary-card glass-panel">
+                    <div class="summary-icon budget"><i class="material-icons">account_balance</i></div>
+                    <div class="summary-info">
+                        <div class="summary-value">{{ formatCurrency(summary.total_budget_actual) }} / {{ formatCurrency(summary.total_budget_planned) }}</div>
+                        <div class="summary-label">Budget (Actual / Planned)</div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Quick View: Projects by Location -->
+            <!-- Projects by Location -->
             <div class="section-header">
                 <h2>Projects by Location</h2>
-                <button class="text-btn" (click)="activeTab = 'projects'">View All</button>
+                <button class="text-btn" (click)="setTab('projects')">View All</button>
             </div>
             <div class="location-cards-grid">
                 <div *ngFor="let loc of projectsByLocation" class="location-card glass-panel">
@@ -77,12 +185,21 @@
                         <div class="location-stats">
                             <span class="stat">{{ loc.project_count }} projects</span>
                             <span class="stat highlight">{{ loc.top_5_count }} top 5</span>
+                            <span class="stat warning" *ngIf="loc.at_risk_count > 0">{{ loc.at_risk_count }} at risk</span>
                         </div>
+                    </div>
+                    <div class="location-budget-bar">
+                        <span class="budget-label">Budget: {{ formatCurrency(loc.total_budget_actual) }} / {{ formatCurrency(loc.total_budget_planned) }}</span>
                     </div>
                     <ul class="project-quick-list">
                         <li *ngFor="let proj of loc.projects?.slice(0, 3)">
                             <span class="project-name">{{ proj.name }}</span>
-                            <span *ngIf="proj.is_top_5" class="top5-badge">Top 5</span>
+                            <span class="status-badge" [ngClass]="getStatusClass(proj.status)">
+                                <span class="status-dot"></span> {{ proj.status }}
+                            </span>
+                            <div class="progress-bar-mini">
+                                <div class="progress-bar-fill" [style.width.%]="proj.percent_complete"></div>
+                            </div>
                         </li>
                     </ul>
                     <div *ngIf="loc.projects && loc.projects.length > 3" class="more-indicator">
@@ -91,54 +208,54 @@
                 </div>
             </div>
 
-            <!-- Quick View: People by Location -->
+            <!-- Workload Alerts -->
             <div class="section-header">
-                <h2>Personnel by Location</h2>
-                <button class="text-btn" (click)="activeTab = 'people'">View All</button>
+                <h2>Workload Alerts</h2>
+                <button class="text-btn" (click)="setTab('people')">View All</button>
             </div>
-            <div class="location-cards-grid">
-                <div *ngFor="let loc of peopleByLocation" class="location-card glass-panel">
-                    <div class="location-card-header">
-                        <h3>{{ loc.location_name }}</h3>
-                        <span class="stat">{{ loc.people_count }} assigned</span>
-                    </div>
-                    <ul class="people-quick-list">
-                        <li *ngFor="let p of loc.people?.slice(0, 4)">
-                            <div class="person-avatar">{{ p.person_name?.charAt(0) }}</div>
-                            <div class="person-quick-info">
-                                <span class="person-name">{{ p.person_name }}</span>
-                                <span class="person-role-tag">{{ p.role_at_location }}</span>
+            <div class="workload-alerts">
+                <ng-container *ngFor="let w of workload">
+                    <div *ngIf="w.total_allocation > 100" class="workload-alert-card glass-panel">
+                        <div class="workload-alert-header">
+                            <div class="workload-alert-person">
+                                <i class="material-icons alert-icon">warning</i>
+                                <div>
+                                    <span class="person-name">{{ w.name }}</span>
+                                    <span class="person-meta">{{ w.role }} — {{ w.organization }}</span>
+                                </div>
                             </div>
-                        </li>
-                    </ul>
+                            <span class="workload-total overcommit">{{ w.total_allocation }}%</span>
+                        </div>
+                        <div class="workload-bar-container">
+                            <div class="workload-bar workload-over" [style.width.%]="w.total_allocation > 150 ? 100 : (w.total_allocation / 150 * 100)">
+                                <span class="workload-bar-label">{{ w.total_allocation }}%</span>
+                            </div>
+                            <div class="workload-threshold-line" [style.left.%]="100 / 150 * 100"></div>
+                        </div>
+                        <div class="workload-breakdown">
+                            <div *ngFor="let a of w.assignments" class="workload-assignment">
+                                <span class="assignment-location">{{ a.location_name }}</span>
+                                <span class="assignment-role">{{ a.role_at_location }}</span>
+                                <span class="assignment-pct">{{ a.allocation_pct }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+                <div *ngIf="(workload | keyvalue).length === 0 || !(workload | json).includes('total_allocation')" class="empty-state">
                 </div>
             </div>
 
-            <!-- Recent Reports -->
-            <div class="section-header">
-                <h2>Recent Reports</h2>
-                <button class="text-btn" (click)="activeTab = 'reports'">View All</button>
-            </div>
-            <div class="reports-list">
-                <div *ngFor="let report of reports.slice(0, 4)" class="report-row glass-panel"
-                    (click)="viewReport(report)">
-                    <div class="report-row-main">
-                        <span class="report-type-badge" [ngClass]="getReportTypeBadgeClass(report.report_type)">
-                            {{ report.report_type }}
-                        </span>
-                        <span class="report-title">{{ report.title }}</span>
-                    </div>
-                    <div class="report-row-meta">
-                        <span>{{ report.location_name }}</span>
-                        <span>{{ report.author_name }}</span>
-                        <span>{{ formatDate(report.report_date) }}</span>
-                    </div>
-                </div>
-            </div>
         </section>
 
         <!-- ========== PROJECTS TAB ========== -->
         <section *ngIf="activeTab === 'projects'" class="fade-in">
+
+            <div class="section-actions">
+                <button class="action-btn" (click)="exportProjectsCsv()">
+                    <i class="material-icons">download</i> Export CSV
+                </button>
+            </div>
+
             <div *ngFor="let loc of projectsByLocation" class="detail-card glass-panel">
                 <div class="detail-card-header" (click)="toggleLocation(loc.location_id)">
                     <div class="detail-card-title">
@@ -148,6 +265,10 @@
                     <div class="detail-card-summary">
                         <span class="stat">{{ loc.project_count }} projects</span>
                         <span class="stat highlight">{{ loc.top_5_count }} top 5</span>
+                        <span class="stat warning" *ngIf="loc.at_risk_count > 0">{{ loc.at_risk_count }} at risk</span>
+                        <span class="stat budget-stat">
+                            {{ formatCurrency(loc.total_budget_actual) }} / {{ formatCurrency(loc.total_budget_planned) }}
+                        </span>
                         <i class="material-icons expand-icon">
                             {{ isExpanded(loc.location_id) ? 'expand_less' : 'expand_more' }}
                         </i>
@@ -157,15 +278,34 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Project Name</th>
-                                <th>Description</th>
-                                <th>Priority</th>
+                                <th>Project</th>
+                                <th>Status</th>
+                                <th>Phase</th>
+                                <th>% Complete</th>
+                                <th>Budget</th>
+                                <th>Top 5</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr *ngFor="let proj of loc.projects">
                                 <td class="cell-name">{{ proj.name }}</td>
-                                <td class="cell-desc">{{ proj.description }}</td>
+                                <td>
+                                    <span class="status-badge" [ngClass]="getStatusClass(proj.status)">
+                                        <span class="status-dot"></span> {{ proj.status }}
+                                    </span>
+                                </td>
+                                <td>{{ proj.phase }}</td>
+                                <td>
+                                    <div class="progress-bar">
+                                        <div class="progress-bar-fill" [style.width.%]="proj.percent_complete"></div>
+                                        <span class="progress-label">{{ proj.percent_complete }}%</span>
+                                    </div>
+                                </td>
+                                <td class="cell-budget">
+                                    <span class="budget-planned">{{ formatCurrency(proj.budget_planned) }}</span>
+                                    <span class="budget-separator">/</span>
+                                    <span class="budget-actual">{{ formatCurrency(proj.budget_actual) }}</span>
+                                </td>
                                 <td>
                                     <span *ngIf="proj.is_top_5" class="top5-badge">Top 5</span>
                                     <span *ngIf="!proj.is_top_5" class="standard-badge">Standard</span>
@@ -175,10 +315,53 @@
                     </table>
                 </div>
             </div>
+
         </section>
 
-        <!-- ========== PEOPLE TAB ========== -->
+        <!-- ========== PERSONNEL TAB ========== -->
         <section *ngIf="activeTab === 'people'" class="fade-in">
+
+            <div class="section-actions">
+                <button class="action-btn" (click)="exportPeopleCsv()">
+                    <i class="material-icons">download</i> Export CSV
+                </button>
+            </div>
+
+            <!-- Workload Overview -->
+            <div class="section-header">
+                <h2>Workload Overview</h2>
+            </div>
+            <div class="workload-grid">
+                <div *ngFor="let w of workload" class="workload-card glass-panel">
+                    <div class="workload-card-header">
+                        <div class="workload-person-info">
+                            <span class="person-name">{{ w.name }}</span>
+                            <span class="person-meta">{{ w.role }} — {{ w.organization }}</span>
+                        </div>
+                        <span class="workload-total-badge" [ngClass]="getWorkloadClass(w.total_allocation)">
+                            {{ w.total_allocation }}%
+                        </span>
+                    </div>
+                    <div class="workload-progress">
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" [ngClass]="getWorkloadClass(w.total_allocation)"
+                                 [style.width.%]="w.total_allocation > 100 ? 100 : w.total_allocation"></div>
+                        </div>
+                    </div>
+                    <div class="workload-assignments">
+                        <div *ngFor="let a of w.assignments" class="assignment-row">
+                            <span class="assignment-location">{{ a.location_name }}</span>
+                            <span class="assignment-role">{{ a.role_at_location }}</span>
+                            <span class="assignment-pct">{{ a.allocation_pct }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- By Location -->
+            <div class="section-header">
+                <h2>By Location</h2>
+            </div>
             <div *ngFor="let loc of peopleByLocation" class="detail-card glass-panel">
                 <div class="detail-card-header" (click)="toggleLocation(loc.location_id + 1000)">
                     <div class="detail-card-title">
@@ -187,6 +370,7 @@
                     </div>
                     <div class="detail-card-summary">
                         <span class="stat">{{ loc.people_count }} personnel</span>
+                        <span class="stat">Total allocation: {{ loc.total_allocation }}%</span>
                         <i class="material-icons expand-icon">
                             {{ isExpanded(loc.location_id + 1000) ? 'expand_less' : 'expand_more' }}
                         </i>
@@ -200,6 +384,7 @@
                                 <th>Organization</th>
                                 <th>Role (Global)</th>
                                 <th>Role (At Location)</th>
+                                <th>Allocation</th>
                                 <th>Email</th>
                             </tr>
                         </thead>
@@ -209,12 +394,149 @@
                                 <td>{{ p.organization }}</td>
                                 <td>{{ p.person_role }}</td>
                                 <td>{{ p.role_at_location }}</td>
+                                <td>
+                                    <span class="allocation-badge">{{ p.allocation_pct }}%</span>
+                                </td>
                                 <td class="cell-email">{{ p.email }}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+
+        </section>
+
+        <!-- ========== HEATMAP TAB ========== -->
+        <section *ngIf="activeTab === 'heatmap'" class="fade-in">
+
+            <div class="section-header">
+                <h2>Location Health Heatmap</h2>
+            </div>
+
+            <div class="heatmap-table-wrapper glass-panel">
+                <table class="heatmap-table">
+                    <thead>
+                        <tr>
+                            <th class="heatmap-location-col">Location</th>
+                            <th>Budget Health</th>
+                            <th>Avg Completion</th>
+                            <th>At Risk + Behind</th>
+                            <th>On Track</th>
+                            <th>Complete</th>
+                            <th>Staff Count</th>
+                            <th>Total Allocation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let h of heatmap">
+                            <td class="heatmap-location-cell">{{ h.location_name }}</td>
+                            <td>
+                                <span class="heatmap-cell" [ngClass]="getHeatmapColor(h.budget_ratio, 'budget')">
+                                    {{ (h.budget_ratio * 100).toFixed(0) }}%
+                                </span>
+                            </td>
+                            <td>
+                                <span class="heatmap-cell" [ngClass]="getHeatmapColor(h.avg_completion, 'schedule')">
+                                    {{ h.avg_completion.toFixed(0) }}%
+                                </span>
+                            </td>
+                            <td>
+                                <span class="heatmap-cell" [ngClass]="getHeatmapColor(h.at_risk + h.behind, 'status')">
+                                    {{ h.at_risk + h.behind }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="heatmap-cell heat-neutral">{{ h.on_track }}</span>
+                            </td>
+                            <td>
+                                <span class="heatmap-cell heat-neutral">{{ h.complete }}</span>
+                            </td>
+                            <td>
+                                <span class="heatmap-cell heat-neutral">{{ h.staff_count }}</span>
+                            </td>
+                            <td>
+                                <span class="heatmap-cell heat-neutral">{{ h.total_staff_allocation }}%</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Legend -->
+            <div class="heatmap-legend glass-panel">
+                <h4>Legend</h4>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="legend-swatch heat-green"></span>
+                        <span>Green — Healthy / On target</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-swatch heat-yellow"></span>
+                        <span>Yellow — Caution / Approaching threshold</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-swatch heat-red"></span>
+                        <span>Red — Critical / Over threshold</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========== ACTIVITY TAB ========== -->
+        <section *ngIf="activeTab === 'activity'" class="fade-in">
+
+            <div class="section-header">
+                <h2>Recent Activity</h2>
+            </div>
+
+            <div class="activity-timeline">
+                <div *ngFor="let entry of activity" class="timeline-entry">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-icon">
+                        <i class="material-icons">{{ getActivityIcon(entry.action) }}</i>
+                    </div>
+                    <div class="timeline-content glass-panel">
+                        <div class="timeline-header">
+                            <span class="entity-badge">{{ entry.entity_type }}</span>
+                            <span class="action-text">{{ entry.action }}</span>
+                            <span class="timeline-time">{{ timeAgo(entry.created_at) }}</span>
+                        </div>
+                        <div class="timeline-details">{{ entry.details }}</div>
+                        <div class="timeline-user">
+                            <i class="material-icons">person</i> {{ entry.user_name }}
+                        </div>
+                    </div>
+                </div>
+                <div *ngIf="activity.length === 0" class="empty-state">
+                    No recent activity.
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========== CHARTS TAB ========== -->
+        <section *ngIf="activeTab === 'charts'" class="fade-in">
+
+            <div class="section-header">
+                <h2>Analytics Charts</h2>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container glass-panel">
+                    <canvas #budgetChart></canvas>
+                </div>
+                <div class="chart-container glass-panel">
+                    <canvas #statusChart></canvas>
+                </div>
+                <div class="chart-container glass-panel">
+                    <canvas #phaseChart></canvas>
+                </div>
+                <div class="chart-container glass-panel">
+                    <canvas #staffingChart></canvas>
+                </div>
+            </div>
+
         </section>
 
         <!-- ========== REPORTS TAB ========== -->
@@ -245,7 +567,9 @@
                         </option>
                     </select>
                 </div>
-                <button class="clear-btn" (click)="clearFilters()">Clear</button>
+                <button class="clear-btn" (click)="clearFilters()">
+                    <i class="material-icons">clear</i> Clear
+                </button>
             </div>
 
             <!-- Reports List -->
@@ -259,21 +583,20 @@
                     </div>
                     <div class="report-row-meta">
                         <span><i class="material-icons meta-icon">place</i> {{ report.location_name }}</span>
-                        <span><i class="material-icons meta-icon">person</i> {{ report.author_name || 'Unknown'
-                            }}</span>
-                        <span><i class="material-icons meta-icon">calendar_today</i> {{ formatDate(report.report_date)
-                            }}</span>
+                        <span><i class="material-icons meta-icon">person</i> {{ report.author_name || 'Unknown' }}</span>
+                        <span><i class="material-icons meta-icon">calendar_today</i> {{ formatDate(report.report_date) }}</span>
                     </div>
                 </div>
                 <div *ngIf="reports.length === 0" class="empty-state">
                     No reports found matching your filters.
                 </div>
             </div>
+
         </section>
 
     </main>
 
-    <!-- Report Detail Modal -->
+    <!-- ===================== REPORT DETAIL MODAL ===================== -->
     <div class="modal-overlay" *ngIf="selectedReport" (click)="closeReport()">
         <div class="modal-content glass-panel" (click)="$event.stopPropagation()">
             <div class="modal-header">
@@ -290,14 +613,13 @@
             </div>
             <div class="modal-meta">
                 <span><i class="material-icons meta-icon">place</i> {{ selectedReport.location_name }}</span>
-                <span><i class="material-icons meta-icon">person</i> {{ selectedReport.author_name || 'Unknown'
-                    }}</span>
-                <span><i class="material-icons meta-icon">calendar_today</i> {{
-                    formatDate(selectedReport.report_date) }}</span>
+                <span><i class="material-icons meta-icon">person</i> {{ selectedReport.author_name || 'Unknown' }}</span>
+                <span><i class="material-icons meta-icon">calendar_today</i> {{ formatDate(selectedReport.report_date) }}</span>
             </div>
             <div class="modal-body">
                 {{ selectedReport.body }}
             </div>
         </div>
     </div>
+
 </div>

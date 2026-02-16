@@ -1,0 +1,77 @@
+<div class="login-page">
+  <div class="login-card glass-panel fade-in">
+    <div class="login-header">
+      <span class="material-icons app-icon">public</span>
+      <h1 class="app-title">Locator Reporter</h1>
+      <p class="app-subtitle">Sign in to your account</p>
+    </div>
+
+    <form class="login-form" (ngSubmit)="login()">
+      <div class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <div class="input-wrapper">
+          <span class="material-icons input-icon">person</span>
+          <input
+            id="username"
+            type="text"
+            class="form-input"
+            placeholder="Enter your username"
+            [(ngModel)]="username"
+            name="username"
+            autocomplete="username"
+            [disabled]="loading"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <div class="input-wrapper">
+          <span class="material-icons input-icon">lock</span>
+          <input
+            id="password"
+            type="password"
+            class="form-input"
+            placeholder="Enter your password"
+            [(ngModel)]="password"
+            name="password"
+            autocomplete="current-password"
+            [disabled]="loading"
+          />
+        </div>
+      </div>
+
+      <div class="error-message" *ngIf="error">
+        <span class="material-icons error-icon">error_outline</span>
+        {{ error }}
+      </div>
+
+      <button type="submit" class="login-btn" [disabled]="loading">
+        <span class="material-icons btn-icon" *ngIf="!loading">login</span>
+        <span class="spinner-small" *ngIf="loading"></span>
+        {{ loading ? 'Signing in...' : 'Sign In' }}
+      </button>
+    </form>
+
+    <div class="demo-credentials">
+      <p class="demo-title">
+        <span class="material-icons demo-icon">info</span>
+        Demo Credentials
+      </p>
+      <div class="demo-list">
+        <div class="demo-item">
+          <span class="demo-role">Admin</span>
+          <span class="demo-cred">admin / password123</span>
+        </div>
+        <div class="demo-item">
+          <span class="demo-role">Manager</span>
+          <span class="demo-cred">alice.chen / password123</span>
+        </div>
+        <div class="demo-item">
+          <span class="demo-role">Viewer</span>
+          <span class="demo-cred">viewer / password123</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
