@@ -6,7 +6,7 @@ import { DashboardService, DashboardSummary, ProjectsByLocation, PeopleByLocatio
 import { ReportService, Report } from '../../services/report';
 import { AuthService } from '../../services/auth';
 import { NotificationService, Notification as AppNotification } from '../../services/notification';
-import Chart from 'chart.js/auto';
+import { Chart } from 'chart.js/auto';
 
 @Component({
   selector: 'app-leadership',
