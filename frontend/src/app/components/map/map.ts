@@ -218,54 +218,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private async initMarkers(): Promise<void> {
-    if (!this.map) return;
-    if (isPlatformBrowser(this.platformId)) {
-      const L = await import('leaflet');
-      console.log('Initializing markers for', this.locations.length, 'locations');
-
-      // Initialize LayerGroup if not exists for better management
-      if (!this.markersLayer) {
-        this.markersLayer = L.layerGroup().addTo(this.map);
-      } else {
-        this.markersLayer.clearLayers();
-      }
-
-      this.locations.forEach(loc => {
-        // Cast to number just in case lat/lng are strings from DB
-        const lat = Number(loc.lat);
-        const lng = Number(loc.lng);
-
-        if (isNaN(lat) || isNaN(lng)) {
-          console.warn('Invalid coordinates:', loc);
-          return;
-        }
-
-        const marker = L.marker([lat, lng])
-          .bindTooltip(loc.name);
-
-        this.markersLayer.addLayer(marker);
-
-        marker.on('click', (e: any) => {
-          L.DomEvent.stopPropagation(e);
-          console.log('Using MapComponent Instance:', this.instanceId);
-
-          this.zone.run(() => {
-            // Force a macrotask to ensure view updates, even if zone state is weird
-            setTimeout(() => {
-              console.log('Inside Angular Zone (Timeout) for Instance ' + this.instanceId);
-              this.selectedLocation = loc;
-              this.showAi = false;
-              this.dashboardLocationId = undefined;
-              console.log('Setting selectedLocation to:', this.selectedLocation);
-              this.cdr.detectChanges();
-            }, 0);
-          });
-        });
-      });
-    }
-  }
-
   openAiForLocation() {
     if (this.selectedLocation) {
       console.log('Opening AI for location:', this.selectedLocation.id);
