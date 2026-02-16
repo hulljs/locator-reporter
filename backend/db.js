@@ -5,7 +5,7 @@ const pool = new Pool({
   host: 'localhost',
   database: 'locator_reporter',
   password: 'password',
-  port: 5475,
+  port: 5432,
 });
 
 module.exports = {
