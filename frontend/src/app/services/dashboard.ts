@@ -142,4 +142,25 @@ export class DashboardService {
   getChartStaffing(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/dashboard/chart/staffing-by-location`);
   }
+
+  // Management
+  getAssignments(personId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/people/${personId}/assignments`);
+  }
+
+  createAssignment(assignment: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/assignments`, assignment);
+  }
+
+  updateAssignment(id: number, assignment: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/assignments/${id}`, assignment);
+  }
+
+  deleteAssignment(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/assignments/${id}`);
+  }
+
+  getLocations(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/locations`);
+  }
 }

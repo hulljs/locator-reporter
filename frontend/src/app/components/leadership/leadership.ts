@@ -279,6 +279,69 @@ export class LeadershipComponent implements OnInit, AfterViewInit {
   viewReport(r: Report) { this.selectedReport = r; }
   closeReport() { this.selectedReport = null; }
 
+  // Manage Workload
+  selectedPerson: WorkloadSummary | null = null;
+  manageAssignments: any[] = [];
+  availableLocations: any[] = [];
+  newAssignment: any = { location_id: '', role_at_location: '', allocation_pct: 0 };
+
+  openManageModal(person: WorkloadSummary) {
+    this.selectedPerson = person;
+    this.dashboardService.getAssignments(person.id).subscribe(data => {
+      this.manageAssignments = data;
+    });
+    this.dashboardService.getLocations().subscribe(data => {
+      this.availableLocations = data;
+    });
+    // Reset new assignment
+    this.newAssignment = { location_id: '', role_at_location: '', allocation_pct: 0 };
+  }
+
+  closeManageModal() {
+    this.selectedPerson = null;
+    this.manageAssignments = [];
+  }
+
+  addAssignment() {
+    if (!this.selectedPerson || !this.newAssignment.location_id) return;
+
+    const payload = {
+      person_id: this.selectedPerson.id,
+      location_id: this.newAssignment.location_id,
+      role_at_location: this.newAssignment.role_at_location,
+      allocation_pct: this.newAssignment.allocation_pct,
+      status: 'active'
+    };
+
+    this.dashboardService.createAssignment(payload).subscribe({
+      next: () => {
+        if (this.selectedPerson) {
+          this.openManageModal(this.selectedPerson); // Reload assignments
+          this.loadWorkload(); // Reload dashboard
+        }
+      },
+      error: (e) => console.error(e)
+    });
+  }
+
+  updateAssignmentPct(a: any) {
+    this.dashboardService.updateAssignment(a.id, { allocation_pct: a.allocation_pct }).subscribe({
+      next: () => this.loadWorkload(),
+      error: (e) => console.error(e)
+    });
+  }
+
+  removeAssignment(id: number) {
+    if (!confirm('Are you sure you want to remove this assignment?')) return;
+    this.dashboardService.deleteAssignment(id).subscribe({
+      next: () => {
+        this.manageAssignments = this.manageAssignments.filter(a => a.id !== id);
+        this.loadWorkload();
+      },
+      error: (e) => console.error(e)
+    });
+  }
+
   getStatusClass(status: string): string {
     switch (status) { case 'on-track': return 'status-green'; case 'at-risk': return 'status-yellow'; case 'behind': return 'status-red'; case 'complete': return 'status-blue'; default: return 'status-gray'; }
   }
@@ -319,6 +382,19 @@ export class LeadershipComponent implements OnInit, AfterViewInit {
 
   getNotificationIcon(type: string): string {
     switch (type) { case 'alert': return 'error'; case 'warning': return 'warning'; default: return 'info'; }
+  }
+
+  getInitials(): string {
+    const name = this.authService.currentUser?.name || 'User';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  }
+
+  getPersonInitials(name: string): string {
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  }
+
+  getActivityClass(action: string): string {
+    return action || 'default';
   }
 
   formatDate(date: string | undefined): string {

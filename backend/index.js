@@ -337,11 +337,35 @@ app.post('/api/assignments', optionalAuth, async (req, res) => {
     }
 });
 
+app.put('/api/assignments/:id', optionalAuth, async (req, res) => {
+    const { id } = req.params;
+    const { person_id, location_id, role_at_location, start_date, end_date, status, allocation_pct } = req.body;
+    try {
+        const result = await pool.query(
+            `UPDATE assignments SET 
+                location_id = COALESCE($1, location_id),
+                role_at_location = COALESCE($2, role_at_location),
+                start_date = COALESCE($3, start_date),
+                end_date = COALESCE($4, end_date),
+                status = COALESCE($5, status),
+                allocation_pct = COALESCE($6, allocation_pct)
+             WHERE id = $7 RETURNING *`,
+            [location_id, role_at_location, start_date, end_date, status, allocation_pct, id]
+        );
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Assignment not found' });
+        await logActivity('assignment', id, 'updated', `Assignment updated (${allocation_pct}%)`, req.user?.name);
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.delete('/api/assignments/:id', async (req, res) => {
     const { id } = req.params;
     try {
         const result = await pool.query('DELETE FROM assignments WHERE id = $1 RETURNING *', [id]);
         if (result.rows.length === 0) return res.status(404).json({ error: 'Assignment not found' });
+        await logActivity('assignment', id, 'deleted', 'Assignment deleted', req.user?.name);
         res.json({ message: 'Assignment deleted' });
     } catch (err) {
         res.status(500).json({ error: err.message });

@@ -7,47 +7,55 @@
             <p class="header-subtitle">Enterprise program overview — projects, personnel, budgets, and reports</p>
         </div>
         <div class="header-right">
-            <!-- Export Dropdown -->
-            <div class="dropdown">
-                <button class="header-btn dropdown-toggle">
-                    <i class="material-icons">download</i> Export
-                </button>
-                <div class="dropdown-menu">
-                    <button class="dropdown-item" (click)="exportProjectsCsv()">
-                        <i class="material-icons">table_chart</i> CSV Projects
-                    </button>
-                    <button class="dropdown-item" (click)="exportPeopleCsv()">
-                        <i class="material-icons">people</i> CSV People
-                    </button>
-                    <button class="dropdown-item" (click)="printDashboard()">
-                        <i class="material-icons">print</i> Print
-                    </button>
-                </div>
-            </div>
+            <!-- Map View Icon -->
+            <a routerLink="/" class="icon-btn" title="Map View">
+                <i class="material-icons">map</i>
+            </a>
 
-            <!-- Notification Bell -->
-            <button class="header-btn notification-btn" (click)="toggleNotifications()">
+            <!-- Notification Icon -->
+            <button class="icon-btn notification-trigger" (click)="toggleNotifications()" title="Notifications">
                 <i class="material-icons">notifications</i>
                 <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
             </button>
 
-            <!-- User Info -->
-            <div class="header-user" *ngIf="authService.isLoggedIn">
-                <div class="user-info">
-                    <span class="user-name">{{ authService.currentUser?.name }}</span>
-                    <span class="user-role">{{ authService.currentUser?.role }}</span>
-                </div>
-                <button class="header-btn logout-btn" (click)="logout()">
-                    <i class="material-icons">logout</i> Log Out
+            <div class="divider-vertical"></div>
+
+            <!-- User Menu & Actions Dropdown -->
+            <div class="user-dropdown" *ngIf="authService.isLoggedIn">
+                <button class="user-trigger">
+                    <div class="user-avatar">{{ getInitials() }}</div>
+                    <div class="user-info-text">
+                        <span class="user-name">{{ authService.currentUser?.name }}</span>
+                        <span class="user-role-label">{{ authService.currentUser?.role }}</span>
+                    </div>
+                    <i class="material-icons chevron">expand_more</i>
                 </button>
+
+                <div class="user-menu">
+                    <div class="menu-header">
+                        <span>Dashboard Actions</span>
+                    </div>
+                    <button class="menu-item" (click)="exportProjectsCsv()">
+                        <i class="material-icons">table_chart</i> Export Projects CSV
+                    </button>
+                    <button class="menu-item" (click)="exportPeopleCsv()">
+                        <i class="material-icons">people</i> Export People CSV
+                    </button>
+                    <button class="menu-item" (click)="printDashboard()">
+                        <i class="material-icons">print</i> Print View
+                    </button>
+
+                    <div class="menu-divider"></div>
+
+                    <button class="menu-item danger" (click)="logout()">
+                        <i class="material-icons">logout</i> Log Out
+                    </button>
+                </div>
             </div>
+
+            <!-- Login (if logged out) -->
             <a routerLink="/login" class="header-btn login-btn" *ngIf="!authService.isLoggedIn">
                 <i class="material-icons">login</i> Log In
-            </a>
-
-            <!-- Map View Link -->
-            <a routerLink="/" class="header-btn map-btn">
-                <i class="material-icons">map</i> Map View
             </a>
         </div>
     </header>
@@ -61,9 +69,7 @@
             </button>
         </div>
         <div class="notification-list">
-            <div *ngFor="let n of notifications"
-                 class="notification-item"
-                 [class.unread]="!n.is_read">
+            <div *ngFor="let n of notifications" class="notification-item" [class.unread]="!n.is_read">
                 <div class="notification-icon">
                     <i class="material-icons">{{ getNotificationIcon(n.type) }}</i>
                 </div>
@@ -167,7 +173,8 @@
                 <div class="summary-card glass-panel">
                     <div class="summary-icon budget"><i class="material-icons">account_balance</i></div>
                     <div class="summary-info">
-                        <div class="summary-value">{{ formatCurrency(summary.total_budget_actual) }} / {{ formatCurrency(summary.total_budget_planned) }}</div>
+                        <div class="summary-value">{{ formatCurrency(summary.total_budget_actual) }} / {{
+                            formatCurrency(summary.total_budget_planned) }}</div>
                         <div class="summary-label">Budget (Actual / Planned)</div>
                     </div>
                 </div>
@@ -182,14 +189,15 @@
                 <div *ngFor="let loc of projectsByLocation" class="location-card glass-panel">
                     <div class="location-card-header">
                         <h3>{{ loc.location_name }}</h3>
-                        <div class="location-stats">
-                            <span class="stat">{{ loc.project_count }} projects</span>
-                            <span class="stat highlight">{{ loc.top_5_count }} top 5</span>
-                            <span class="stat warning" *ngIf="loc.at_risk_count > 0">{{ loc.at_risk_count }} at risk</span>
-                        </div>
+                    </div>
+                    <div class="location-stats-row">
+                        <span class="stat">{{ loc.project_count }} projects</span>
+                        <span class="stat highlight">{{ loc.top_5_count }} top 5</span>
+                        <span class="stat warning" *ngIf="loc.at_risk_count > 0">{{ loc.at_risk_count }} at risk</span>
                     </div>
                     <div class="location-budget-bar">
-                        <span class="budget-label">Budget: {{ formatCurrency(loc.total_budget_actual) }} / {{ formatCurrency(loc.total_budget_planned) }}</span>
+                        <span class="budget-label">Budget: {{ formatCurrency(loc.total_budget_actual) }} / {{
+                            formatCurrency(loc.total_budget_planned) }}</span>
                     </div>
                     <ul class="project-quick-list">
                         <li *ngFor="let proj of loc.projects?.slice(0, 3)">
@@ -213,35 +221,52 @@
                 <h2>Workload Alerts</h2>
                 <button class="text-btn" (click)="setTab('people')">View All</button>
             </div>
-            <div class="workload-alerts">
+            <div class="workload-alerts-grid">
                 <ng-container *ngFor="let w of workload">
-                    <div *ngIf="w.total_allocation > 100" class="workload-alert-card glass-panel">
-                        <div class="workload-alert-header">
-                            <div class="workload-alert-person">
-                                <i class="material-icons alert-icon">warning</i>
-                                <div>
-                                    <span class="person-name">{{ w.name }}</span>
-                                    <span class="person-meta">{{ w.role }} — {{ w.organization }}</span>
+                    <div *ngIf="w.total_allocation > 100" class="workload-card alert-card glass-panel"
+                        (click)="openManageModal(w)">
+                        <div class="card-top-strip danger"></div>
+                        <div class="workload-header">
+                            <div class="person-avatar-lg danger">
+                                {{ getPersonInitials(w.name) }}
+                            </div>
+                            <div class="workload-info">
+                                <div class="name-row">
+                                    <span class="person-name-lg">{{ w.name }}</span>
+                                    <span class="total-badge danger">{{ w.total_allocation }}%</span>
                                 </div>
+                                <span class="person-role">{{ w.role }}</span>
                             </div>
-                            <span class="workload-total overcommit">{{ w.total_allocation }}%</span>
-                        </div>
-                        <div class="workload-bar-container">
-                            <div class="workload-bar workload-over" [style.width.%]="w.total_allocation > 150 ? 100 : (w.total_allocation / 150 * 100)">
-                                <span class="workload-bar-label">{{ w.total_allocation }}%</span>
+                            <div class="edit-action">
+                                <i class="material-icons">edit</i>
                             </div>
-                            <div class="workload-threshold-line" [style.left.%]="100 / 150 * 100"></div>
                         </div>
-                        <div class="workload-breakdown">
-                            <div *ngFor="let a of w.assignments" class="workload-assignment">
-                                <span class="assignment-location">{{ a.location_name }}</span>
-                                <span class="assignment-role">{{ a.role_at_location }}</span>
-                                <span class="assignment-pct">{{ a.allocation_pct }}%</span>
+
+                        <div class="workload-meter-container">
+                            <div class="meter-label">
+                                <span>Utilization</span>
+                                <span class="meter-val danger">{{ w.total_allocation }}%</span>
+                            </div>
+                            <div class="meter-track">
+                                <div class="meter-fill danger-gradient" [style.width.%]="100"></div>
+                                <!-- Over 100 visual -->
+                            </div>
+                            <div class="over-capacity-msg">
+                                <i class="material-icons">warning</i> {{ w.total_allocation - 100 }}% over capacity
+                            </div>
+                        </div>
+
+                        <div class="assignments-list-compact">
+                            <div *ngFor="let a of w.assignments" class="assignment-chip">
+                                <span class="chip-loc">{{ a.location_name }}</span>
+                                <span class="chip-role">{{ a.role_at_location }}</span>
+                                <span class="chip-val">{{ a.allocation_pct }}%</span>
                             </div>
                         </div>
                     </div>
                 </ng-container>
-                <div *ngIf="(workload | keyvalue).length === 0 || !(workload | json).includes('total_allocation')" class="empty-state">
+                <div *ngIf="(workload | keyvalue).length === 0" class="empty-state">
+                    No alerts.
                 </div>
             </div>
 
@@ -259,16 +284,24 @@
             <div *ngFor="let loc of projectsByLocation" class="detail-card glass-panel">
                 <div class="detail-card-header" (click)="toggleLocation(loc.location_id)">
                     <div class="detail-card-title">
-                        <i class="material-icons">place</i>
+                        <div class="loc-icon-box">
+                            <i class="material-icons">place</i>
+                        </div>
                         <h3>{{ loc.location_name }}</h3>
                     </div>
                     <div class="detail-card-summary">
-                        <span class="stat">{{ loc.project_count }} projects</span>
-                        <span class="stat highlight">{{ loc.top_5_count }} top 5</span>
-                        <span class="stat warning" *ngIf="loc.at_risk_count > 0">{{ loc.at_risk_count }} at risk</span>
-                        <span class="stat budget-stat">
-                            {{ formatCurrency(loc.total_budget_actual) }} / {{ formatCurrency(loc.total_budget_planned) }}
-                        </span>
+                        <div class="mini-stat">
+                            <span class="val">{{ loc.project_count }}</span>
+                            <span class="lbl">Projects</span>
+                        </div>
+                        <div class="mini-stat" *ngIf="loc.at_risk_count > 0">
+                            <span class="val warning-text">{{ loc.at_risk_count }}</span>
+                            <span class="lbl warning-text">At Risk</span>
+                        </div>
+                        <div class="mini-stat budget">
+                            <span class="val">{{ formatCurrency(loc.total_budget_actual) }}</span>
+                            <span class="lbl">of {{ formatCurrency(loc.total_budget_planned) }}</span>
+                        </div>
                         <i class="material-icons expand-icon">
                             {{ isExpanded(loc.location_id) ? 'expand_less' : 'expand_more' }}
                         </i>
@@ -332,27 +365,50 @@
                 <h2>Workload Overview</h2>
             </div>
             <div class="workload-grid">
-                <div *ngFor="let w of workload" class="workload-card glass-panel">
-                    <div class="workload-card-header">
-                        <div class="workload-person-info">
-                            <span class="person-name">{{ w.name }}</span>
-                            <span class="person-meta">{{ w.role }} — {{ w.organization }}</span>
+                <div *ngFor="let w of workload" class="workload-card glass-panel"
+                    [class.over]="w.total_allocation > 100" (click)="openManageModal(w)">
+                    <div class="workload-header">
+                        <div class="person-avatar-lg" [ngClass]="{
+                            'danger': w.total_allocation > 100,
+                            'warning': w.total_allocation >= 80 && w.total_allocation <= 100,
+                            'success': w.total_allocation < 80
+                        }">
+                            {{ getPersonInitials(w.name) }}
                         </div>
-                        <span class="workload-total-badge" [ngClass]="getWorkloadClass(w.total_allocation)">
-                            {{ w.total_allocation }}%
-                        </span>
-                    </div>
-                    <div class="workload-progress">
-                        <div class="progress-bar">
-                            <div class="progress-bar-fill" [ngClass]="getWorkloadClass(w.total_allocation)"
-                                 [style.width.%]="w.total_allocation > 100 ? 100 : w.total_allocation"></div>
+                        <div class="workload-info">
+                            <div class="name-row">
+                                <span class="person-name-lg">{{ w.name }}</span>
+                                <span class="total-badge" [ngClass]="{
+                                    'danger': w.total_allocation > 100,
+                                    'warning': w.total_allocation >= 80 && w.total_allocation <= 100,
+                                    'success': w.total_allocation < 80
+                                }">{{ w.total_allocation }}%</span>
+                            </div>
+                            <span class="person-role">{{ w.role }} — {{ w.organization }}</span>
+                        </div>
+                        <div class="edit-action">
+                            <i class="material-icons">edit</i>
                         </div>
                     </div>
-                    <div class="workload-assignments">
-                        <div *ngFor="let a of w.assignments" class="assignment-row">
-                            <span class="assignment-location">{{ a.location_name }}</span>
-                            <span class="assignment-role">{{ a.role_at_location }}</span>
-                            <span class="assignment-pct">{{ a.allocation_pct }}%</span>
+
+                    <div class="workload-meter-container">
+                        <div class="meter-track">
+                            <div class="meter-fill"
+                                [style.width.%]="w.total_allocation > 100 ? 100 : w.total_allocation" [ngClass]="{
+                                    'danger-gradient': w.total_allocation > 100,
+                                    'warning-gradient': w.total_allocation >= 80 && w.total_allocation <= 100,
+                                    'success-gradient': w.total_allocation < 80
+                                  }"></div>
+                        </div>
+                    </div>
+
+                    <div class="assignments-list-compact">
+                        <div *ngFor="let a of w.assignments" class="assignment-chip">
+                            <div class="chip-row">
+                                <span class="chip-loc">{{ a.location_name }}</span>
+                                <span class="chip-val">{{ a.allocation_pct }}%</span>
+                            </div>
+                            <span class="chip-role-sub">{{ a.role_at_location }}</span>
                         </div>
                     </div>
                 </div>
@@ -490,22 +546,22 @@
                 <h2>Recent Activity</h2>
             </div>
 
-            <div class="activity-timeline">
-                <div *ngFor="let entry of activity" class="timeline-entry">
-                    <div class="timeline-line"></div>
-                    <div class="timeline-icon">
-                        <i class="material-icons">{{ getActivityIcon(entry.action) }}</i>
+            <div class="activity-list">
+                <div *ngFor="let entry of activity" class="activity-row glass-panel">
+                    <div class="activity-row-main">
+                        <div class="activity-type-icon" [ngClass]="getActivityClass(entry.action)">
+                            <i class="material-icons">{{ getActivityIcon(entry.action) }}</i>
+                        </div>
+                        <div class="activity-info">
+                            <span class="activity-action">
+                                <span class="entity-badge">{{ entry.entity_type }}</span> {{ entry.action }}
+                            </span>
+                            <span class="activity-details">{{ entry.details }}</span>
+                        </div>
                     </div>
-                    <div class="timeline-content glass-panel">
-                        <div class="timeline-header">
-                            <span class="entity-badge">{{ entry.entity_type }}</span>
-                            <span class="action-text">{{ entry.action }}</span>
-                            <span class="timeline-time">{{ timeAgo(entry.created_at) }}</span>
-                        </div>
-                        <div class="timeline-details">{{ entry.details }}</div>
-                        <div class="timeline-user">
-                            <i class="material-icons">person</i> {{ entry.user_name }}
-                        </div>
+                    <div class="activity-row-meta">
+                        <span><i class="material-icons meta-icon">person</i> {{ entry.user_name }}</span>
+                        <span><i class="material-icons meta-icon">schedule</i> {{ timeAgo(entry.created_at) }}</span>
                     </div>
                 </div>
                 <div *ngIf="activity.length === 0" class="empty-state">
@@ -583,8 +639,10 @@
                     </div>
                     <div class="report-row-meta">
                         <span><i class="material-icons meta-icon">place</i> {{ report.location_name }}</span>
-                        <span><i class="material-icons meta-icon">person</i> {{ report.author_name || 'Unknown' }}</span>
-                        <span><i class="material-icons meta-icon">calendar_today</i> {{ formatDate(report.report_date) }}</span>
+                        <span><i class="material-icons meta-icon">person</i> {{ report.author_name || 'Unknown'
+                            }}</span>
+                        <span><i class="material-icons meta-icon">calendar_today</i> {{ formatDate(report.report_date)
+                            }}</span>
                     </div>
                 </div>
                 <div *ngIf="reports.length === 0" class="empty-state">
@@ -601,8 +659,7 @@
         <div class="modal-content glass-panel" (click)="$event.stopPropagation()">
             <div class="modal-header">
                 <div>
-                    <span class="report-type-badge"
-                        [ngClass]="getReportTypeBadgeClass(selectedReport.report_type)">
+                    <span class="report-type-badge" [ngClass]="getReportTypeBadgeClass(selectedReport.report_type)">
                         {{ selectedReport.report_type }}
                     </span>
                     <h2>{{ selectedReport.title }}</h2>
@@ -613,11 +670,92 @@
             </div>
             <div class="modal-meta">
                 <span><i class="material-icons meta-icon">place</i> {{ selectedReport.location_name }}</span>
-                <span><i class="material-icons meta-icon">person</i> {{ selectedReport.author_name || 'Unknown' }}</span>
-                <span><i class="material-icons meta-icon">calendar_today</i> {{ formatDate(selectedReport.report_date) }}</span>
+                <span><i class="material-icons meta-icon">person</i> {{ selectedReport.author_name || 'Unknown'
+                    }}</span>
+                <span><i class="material-icons meta-icon">calendar_today</i> {{ formatDate(selectedReport.report_date)
+                    }}</span>
             </div>
             <div class="modal-body">
                 {{ selectedReport.body }}
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== MANAGE WORKLOAD MODAL ===================== -->
+    <div class="modal-overlay" *ngIf="selectedPerson" (click)="closeManageModal()">
+        <div class="modal-content glass-panel" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <h2>Manage Workload</h2>
+                    <p class="modal-subtitle">{{ selectedPerson.name }} — {{ selectedPerson.role }}</p>
+                </div>
+                <button class="close-btn" (click)="closeManageModal()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- New Assignment Form -->
+                <div class="glass-panel inner-panel mb-4">
+                    <h4 class="h5 mb-3">Add New Assignment</h4>
+                    <div class="form-row">
+                        <select [(ngModel)]="newAssignment.location_id" class="form-input flex-grow">
+                            <option value="" disabled selected>Select Location</option>
+                            <option *ngFor="let loc of availableLocations" [value]="loc.id">{{ loc.name }}</option>
+                        </select>
+                        <input type="text" [(ngModel)]="newAssignment.role_at_location" placeholder="Role (e.g. Lead)"
+                            class="form-input flex-grow">
+                        <input type="number" [(ngModel)]="newAssignment.allocation_pct" placeholder="Pct %"
+                            class="form-input w-24">
+                        <button class="action-btn" (click)="addAssignment()" [disabled]="!newAssignment.location_id">
+                            <i class="material-icons">add</i> Add
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Current Assignments List -->
+                <h4 class="h5 mb-3">Current Assignments</h4>
+                <div class="assignments-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Location</th>
+                                <th>Role</th>
+                                <th>Allocation %</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let a of manageAssignments">
+                                <td>{{ a.location_name }}</td>
+                                <td>
+                                    <input type="text" [(ngModel)]="a.role_at_location" class="table-input"
+                                        (blur)="updateAssignmentPct(a)">
+                                </td>
+                                <td>
+                                    <input type="number" [(ngModel)]="a.allocation_pct" class="table-input w-24"
+                                        (blur)="updateAssignmentPct(a)">
+                                </td>
+                                <td class="actions-cell">
+                                    <button class="icon-btn danger-hover" (click)="removeAssignment(a.id)">
+                                        <i class="material-icons">delete</i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr *ngIf="manageAssignments.length === 0">
+                                <td colspan="4" class="empty-state-sm">No active assignments.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 flex justify-between items-center border-t border-glass pt-4">
+                    <span class="text-secondary">Expected Total Allocation:</span>
+                    <span [ngClass]="getWorkloadClass(selectedPerson.total_allocation)" class="font-bold text-lg">{{
+                        selectedPerson.total_allocation }}%</span>
+                </div>
+
             </div>
         </div>
     </div>

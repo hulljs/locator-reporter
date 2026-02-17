@@ -1,0 +1,15 @@
+{
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5475,
+            "driver": "PostgreSQL",
+            "name": "locator",
+            "database": "locator_reporter",
+            "username": "postgres",
+            "password": "password"
+        }
+    ]
+}
